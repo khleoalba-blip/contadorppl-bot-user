@@ -39,13 +39,14 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> requestCode(String phone) async {
-    _status = AuthStatus.loading;
+    // ⚠️ NO cambiar a loading aquí — eso destruiría el LoginScreen
+    // y el await en _solicitarCodigo() no podría hacer setState.
     _errorMessage = null;
-    notifyListeners();
+    // notifyListeners() — mínimo impacto, solo limpia errores previos
 
     try {
       await _authService.requestCode(phone);
-      _status = AuthStatus.unauthenticated; // Still need to verify
+      // Éxito: notificar sin cambiar status
       notifyListeners();
     } on ApiException catch (e) {
       _status = AuthStatus.error;

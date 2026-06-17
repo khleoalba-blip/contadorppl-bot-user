@@ -13,6 +13,7 @@ class ApiException implements Exception {
 }
 
 class ApiService {
+  static const _timeout = Duration(seconds: 60);
   String? _token;
 
   void setToken(String? token) {
@@ -35,7 +36,7 @@ class ApiService {
       final url = Uri.parse('${ApiConfig.baseUrl}$endpoint');
       final response = await http
           .post(url, headers: _headers, body: body != null ? jsonEncode(body) : null)
-          .timeout(const Duration(seconds: 15));
+          .timeout(_timeout);
 
       return _handleResponse(response);
     } on SocketException {
@@ -50,7 +51,7 @@ class ApiService {
       final url = Uri.parse('${ApiConfig.baseUrl}$endpoint');
       final response = await http
           .get(url, headers: _headers)
-          .timeout(const Duration(seconds: 15));
+          .timeout(_timeout);
 
       return _handleResponse(response);
     } on SocketException {
@@ -65,7 +66,7 @@ class ApiService {
       final url = Uri.parse('${ApiConfig.baseUrl}$endpoint');
       final response = await http
           .put(url, headers: _headers, body: body != null ? jsonEncode(body) : null)
-          .timeout(const Duration(seconds: 15));
+          .timeout(_timeout);
 
       return _handleResponse(response);
     } on SocketException {
@@ -80,7 +81,7 @@ class ApiService {
       final url = Uri.parse('${ApiConfig.baseUrl}$endpoint');
       final response = await http
           .delete(url, headers: _headers)
-          .timeout(const Duration(seconds: 15));
+          .timeout(_timeout);
 
       return _handleResponse(response);
     } on SocketException {
