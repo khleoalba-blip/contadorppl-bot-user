@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../config/api_config.dart';
 import '../providers/auth_provider.dart';
 import '../models/user_model.dart';
 
@@ -97,33 +98,29 @@ class AppDrawer extends StatelessWidget {
   }
 
   void _showServerConfigDialog(BuildContext context) {
-    final hostController = TextEditingController();
-    final portController = TextEditingController();
+    final urlController = TextEditingController(text: ApiConfig.host);
 
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Configuración del Servidor'),
+        title: const Text('Servidor del Bot'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(
-              controller: hostController,
-              decoration: const InputDecoration(
-                labelText: 'Dirección IP del Bot',
-                hintText: '192.168.1.100',
-                prefixIcon: Icon(Icons.dns),
-              ),
+            const Text(
+              'URL completa de tu bot (con https://)',
+              style: TextStyle(fontSize: 13, color: Colors.grey),
             ),
             const SizedBox(height: 12),
             TextField(
-              controller: portController,
-              keyboardType: TextInputType.number,
+              controller: urlController,
               decoration: const InputDecoration(
-                labelText: 'Puerto',
-                hintText: '3000',
-                prefixIcon: Icon(Icons.lan),
+                labelText: 'URL del Bot',
+                hintText: 'https://cppl-stble-2.onrender.com',
+                prefixIcon: Icon(Icons.link),
+                border: OutlineInputBorder(),
               ),
+              keyboardType: TextInputType.url,
             ),
           ],
         ),
@@ -133,14 +130,20 @@ class AppDrawer extends StatelessWidget {
             child: const Text('Cancelar'),
           ),
           FilledButton(
-            onPressed: () {
-              // Server config would be changed here
-              Navigator.of(ctx).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Configuración guardada. Reinicia la app para aplicar cambios.'),
-                ),
-              );
+            onPressed: () async {
+              final url = urlController.text.trim();
+              if (url.isNotEmpty) {
+                await ApiConfig.setBaseUrl(url);
+                Navigator.of(ctx).pop();
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('✅ Servidor actualizado. Reinicia la app para aplicar.'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              }
             },
             child: const Text('Guardar'),
           ),

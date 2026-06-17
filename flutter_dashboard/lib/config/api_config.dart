@@ -1,20 +1,27 @@
-// ignore_for_file: constant_identifier_names
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiConfig {
-  // Cambiar esta IP por la IP del servidor del bot
-  static const String DEFAULT_HOST = '192.168.1.100';
-  static const int DEFAULT_PORT = 3000;
+  static const String DEFAULT_URL = 'https://cppl-stble-2.onrender.com';
   static const String API_PATH = '/api';
 
-  static String _host = DEFAULT_HOST;
-  static int _port = DEFAULT_PORT;
+  static String _baseUrl = DEFAULT_URL;
 
-  static String get baseUrl => 'http://$_host:$_port$API_PATH';
+  static String get baseUrl => '$_baseUrl$API_PATH';
 
-  static void configure({required String host, int port = 3000}) {
-    _host = host;
-    _port = port;
+  static Future<void> loadFromPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    _baseUrl = prefs.getString('server_url') ?? DEFAULT_URL;
   }
+
+  static Future<void> setBaseUrl(String url) async {
+    // Quitar trailing slash
+    if (url.endsWith('/')) url = url.substring(0, url.length - 1);
+    _baseUrl = url;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('server_url', _baseUrl);
+  }
+
+  static String get host => _baseUrl;
 
   // Auth endpoints
   static const String requestCode = '/auth/request-code';

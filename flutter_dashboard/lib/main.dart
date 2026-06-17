@@ -16,8 +16,9 @@ import 'screens/listero_detail_screen.dart';
 import 'screens/jornadas_screen.dart';
 import 'screens/jornada_detail_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await ApiConfig.loadFromPrefs();
   runApp(const ContadorPPLApp());
 }
 
