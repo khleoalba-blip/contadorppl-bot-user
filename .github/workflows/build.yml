@@ -45,30 +45,25 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "Version: v$VERSION"
 
-      - name: Build APK per ABI
-        run: |
-          flutter build apk --release --target-platform android-arm
-          flutter build apk --release --target-platform android-arm64
-          flutter build apk --release --target-platform android-x64
-
-      - name: Package APKs
+      - name: Build all APKs
         run: |
           mkdir -p release_apks
-          APK_DIR="build/app/outputs/flutter-apk"
-          echo "=== Archivos en $APK_DIR ==="
-          ls -la "$APK_DIR/"
+
+          echo "=== arm64-v8a (modernos) ==="
+          flutter build apk --release --target-platform android-arm64
+          cp build/app/outputs/flutter-apk/app-release.apk release_apks/ContadorPPL-v$VERSION-arm64-v8a.apk
+
+          echo "=== armeabi-v7a (32-bit) ==="
+          flutter build apk --release --target-platform android-arm
+          cp build/app/outputs/flutter-apk/app-release.apk release_apks/ContadorPPL-v$VERSION-armeabi-v7a.apk
+
+          echo "=== x86_64 (emuladores) ==="
+          flutter build apk --release --target-platform android-x64
+          cp build/app/outputs/flutter-apk/app-release.apk release_apks/ContadorPPL-v$VERSION-x86_64.apk
+
           echo ""
-          cd "$APK_DIR"
-          for f in *.apk; do
-            echo "Copiando: $f"
-            cp "$f" "$GITHUB_WORKSPACE/flutter_dashboard/release_apks/ContadorPPL-v$VERSION-$f"
-          done
-          cd "$GITHUB_WORKSPACE/flutter_dashboard"
-          echo ""
-          echo "=== APKs empaquetados ==="
-          ls -la release_apks/
-          echo ""
-          echo "Total APKs: $(ls release_apks/ | wc -l)"
+          echo "=== APKs generados ==="
+          ls -lh release_apks/
 
       - name: Create/Update Release
         uses: ncipollo/release-action@v1
