@@ -1,0 +1,31 @@
+/**
+ * INSTRUCCIONES PARA INTEGRAR LA API EN EL BOT
+ * =============================================
+ *
+ * 1. Copia api_server.js en la carpeta plugins/ de tu bot
+ * 
+ * 2. En index.js de tu bot, busca donde dice:
+ *      const app = express();
+ *      const PORT = process.env.PORT || 3000;
+ * 
+ * 3. DESPUÉS de "const app = express();", agrega:
+ *      app.use(express.json());
+ *      app.use('/api', require('./plugins/api_server.js'));
+ * 
+ * 4. El endpoint de uptime (/) sigue funcionando normalmente.
+ *    La API queda en /api/status, /api/auth, /api/groups, etc.
+ * 
+ * 5. (Opcional) Agrega en config.env:
+ *    API_TOKEN=un-token-seguro-personalizado
+ * 
+ * Ejemplo de lo que queda en index.js:
+ * 
+ *   const app = express();
+ *   app.use(express.json());                          // <-- NUEVO
+ *   app.use('/api', require('./plugins/api_server')); // <-- NUEVO
+ *   const PORT = process.env.PORT || 3000;
+ * 
+ * =============================================
+ */
+
+console.log('[API] Para integrar, sigue las instrucciones en este archivo.');

@@ -1,0 +1,37 @@
+// android/settings.gradle
+pluginManagement {
+    def flutterSdkPath = {
+        // 1. Intentar desde env var (CI: subosito/flutter-action la define)
+        def envFlutter = System.getenv("FLUTTER_ROOT")
+        if (envFlutter != null && !envFlutter.isEmpty()) {
+            return envFlutter
+        }
+        // 2. Intentar desde local.properties (máquina local)
+        def localProps = file("local.properties")
+        if (localProps.exists()) {
+            def properties = new Properties()
+            localProps.withInputStream { properties.load(it) }
+            def sdkPath = properties.getProperty("flutter.sdk")
+            if (sdkPath != null && !sdkPath.isEmpty()) {
+                return sdkPath
+            }
+        }
+        throw new GradleException("flutter.sdk not found. Set FLUTTER_ROOT env var or add flutter.sdk to local.properties")
+    }()
+
+    includeBuild("$flutterSdkPath/packages/flutter_tools/gradle")
+
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+plugins {
+    id "dev.flutter.flutter-plugin-loader" version "1.0.0"
+    id "com.android.application" version "8.1.4" apply false
+    id "org.jetbrains.kotlin.android" version "1.9.22" apply false
+}
+
+include ":app"
