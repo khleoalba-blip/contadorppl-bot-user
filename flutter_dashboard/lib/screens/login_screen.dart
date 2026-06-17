@@ -15,6 +15,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
 
   bool _codeSent = false;
+  bool _sending = false;
 
   @override
   void dispose() {
@@ -94,31 +95,30 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
 
                   if (!_codeSent) ...[
-                    // Phone input step
                     _buildPhoneInput(theme),
                   ] else ...[
-                    // Code verification step
                     _buildCodeInput(theme, authProvider),
                   ],
 
                   const SizedBox(height: 16),
 
-                  // Toggle between steps
                   if (_codeSent)
                     TextButton(
-                      onPressed: () {
-                        setState(() {
-                          _codeSent = false;
-                          _codeController.clear();
-                          authProvider.clearError();
-                        });
-                      },
+                      onPressed: _sending
+                          ? null
+                          : () {
+                              setState(() {
+                                _codeSent = false;
+                                _sending = false;
+                                _codeController.clear();
+                                authProvider.clearError();
+                              });
+                            },
                       child: const Text('Cambiar número de teléfono'),
                     ),
 
                   const SizedBox(height: 24),
 
-                  // Footer
                   Text(
                     'El código de confirmación será enviado\npor WhatsApp al número registrado.',
                     textAlign: TextAlign.center,
@@ -147,7 +147,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Formato cubano: +53 XXXX XXXX',
+          'Sin el +53, solo los dígitos',
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -157,12 +157,13 @@ class _LoginScreenState extends State<LoginScreen> {
           controller: _phoneController,
           keyboardType: TextInputType.phone,
           textInputAction: TextInputAction.done,
-          decoration: InputDecoration(
+          enabled: !_sending,
+          decoration: const InputDecoration(
             labelText: 'Teléfono',
-            hintText: '+53 5XXX XXXX',
-            prefixIcon: const Icon(Icons.phone_android),
+            hintText: '5XXX XXXX',
+            prefixIcon: Icon(Icons.phone_android),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.all(Radius.circular(12)),
             ),
             filled: true,
           ),
@@ -172,25 +173,40 @@ class _LoginScreenState extends State<LoginScreen> {
             }
             final cleaned = value.replaceAll(RegExp(r'[\s\-\(\)]'), '');
             if (cleaned.length < 10) {
-              return 'Número de teléfono inválido';
+              return 'Número muy corto (mínimo 10 dígitos)';
             }
             return null;
           },
-          onFieldSubmitted: (_) => _solicitarCodigo(),
         ),
         const SizedBox(height: 20),
         FilledButton(
-          onPressed: _solicitarCodigo,
+          onPressed: _sending ? null : _solicitarCodigo,
           style: FilledButton.styleFrom(
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
           ),
-          child: const Text(
-            'Solicitar Código',
-            style: TextStyle(fontSize: 16),
-          ),
+          child: _sending
+              ? const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Text('Enviando...', style: TextStyle(fontSize: 16)),
+                  ],
+                )
+              : const Text(
+                  'Solicitar Código',
+                  style: TextStyle(fontSize: 16),
+                ),
         ),
       ],
     );
@@ -217,7 +233,7 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               const TextSpan(text: 'Código enviado a '),
               TextSpan(
-                text: _phoneController.text.trim(),
+                text: '+${_phoneController.text.trim()}',
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
               const TextSpan(text: ' por WhatsApp'),
@@ -230,13 +246,13 @@ class _LoginScreenState extends State<LoginScreen> {
           keyboardType: TextInputType.number,
           textInputAction: TextInputAction.done,
           maxLength: 6,
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             labelText: 'Código de confirmación',
             hintText: '000000',
-            prefixIcon: const Icon(Icons.lock),
+            prefixIcon: Icon(Icons.lock),
             counterText: '',
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.all(Radius.circular(12)),
             ),
             filled: true,
           ),
@@ -249,7 +265,6 @@ class _LoginScreenState extends State<LoginScreen> {
             }
             return null;
           },
-          onFieldSubmitted: (_) => _verificarCodigo(authProvider),
         ),
         const SizedBox(height: 20),
         FilledButton(
@@ -278,17 +293,37 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void _solicitarCodigo() {
-    if (_formKey.currentState?.validate() ?? false) {
-      final authProvider = context.read<AuthProvider>();
-      authProvider.clearError();
-      authProvider.requestCode(_phoneController.text.trim()).then((_) {
-        if (authProvider.status != AuthStatus.error) {
-          setState(() {
-            _codeSent = true;
-          });
-        }
-      });
+  Future<void> _solicitarCodigo() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (_sending) return;
+
+    setState(() {
+      _sending = true;
+    });
+
+    final authProvider = context.read<AuthProvider>();
+    authProvider.clearError();
+
+    try {
+      await authProvider.requestCode(_phoneController.text.trim());
+
+      // Verificar el estado después de que requestCode termine
+      if (!mounted) return;
+
+      if (authProvider.status == AuthStatus.error) {
+        // Mostrar error, no avanzar
+        setState(() => _sending = false);
+      } else {
+        // Éxito: mostrar pantalla de código
+        setState(() {
+          _sending = false;
+          _codeSent = true;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _sending = false);
+      }
     }
   }
 
