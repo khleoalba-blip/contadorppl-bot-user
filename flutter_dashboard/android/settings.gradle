@@ -6,7 +6,7 @@ pluginManagement {
         if (envFlutter != null && !envFlutter.isEmpty()) {
             return envFlutter
         }
-        // 2. Intentar desde local.properties (máquina local)
+        // 2. Intentar desde local.properties (maquina local)
         def localProps = file("local.properties")
         if (localProps.exists()) {
             def properties = new Properties()
