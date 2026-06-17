@@ -73,7 +73,7 @@ class ContadorPPLApp extends StatelessWidget {
         elevation: 0,
         scrolledUnderElevation: 1,
       ),
-      cardTheme: CardThemeData(
+      cardTheme: CardTheme(
         elevation: 1,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
@@ -109,7 +109,7 @@ class ContadorPPLApp extends StatelessWidget {
         elevation: 0,
         scrolledUnderElevation: 1,
       ),
-      cardTheme: CardThemeData(
+      cardTheme: CardTheme(
         elevation: 1,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),

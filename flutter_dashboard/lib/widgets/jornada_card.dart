@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/jornada_model.dart';
+import 'status_badge.dart';
 
 class JornadaCard extends StatelessWidget {
   final JornadaModel jornada;

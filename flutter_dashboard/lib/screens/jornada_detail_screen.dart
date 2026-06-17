@@ -5,6 +5,7 @@ import '../models/jornada_model.dart';
 import '../providers/jornadas_provider.dart';
 import '../widgets/loading_overlay.dart';
 import '../widgets/status_badge.dart';
+import '../widgets/status_badge.dart';
 
 class JornadaDetailScreen extends StatefulWidget {
   const JornadaDetailScreen({super.key});
