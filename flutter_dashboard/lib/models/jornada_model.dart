@@ -10,6 +10,11 @@ class JornadaModel {
   final DateTime? fechaCreacion;
   final double totalRecaudado;
   final String resumen;
+  final String pick3; // Pick 3 result
+  final String pick4; // Pick 4 result
+  final int premiosProcesados;
+  final int listerosCount;
+  final double totalPremios;
 
   JornadaModel({
     required this.id,
@@ -23,12 +28,17 @@ class JornadaModel {
     this.fechaCreacion,
     this.totalRecaudado = 0.0,
     this.resumen = '',
+    this.pick3 = '',
+    this.pick4 = '',
+    this.premiosProcesados = 0,
+    this.listerosCount = 0,
+    this.totalPremios = 0.0,
   });
 
   factory JornadaModel.fromJson(Map<String, dynamic> json) {
     return JornadaModel(
       id: json['_id'] as String? ?? json['id'] as String? ?? '',
-      lottery: json['lottery'] as String? ?? '',
+      lottery: json['loteria'] as String? ?? json['lottery'] as String? ?? '',
       turno: json['turno'] as String? ?? 'mañana',
       estado: json['estado'] as String? ?? 'pendiente',
       picks: json['picks'] != null
@@ -41,30 +51,40 @@ class JornadaModel {
               .map((p) => PremioEntry.fromJson(p as Map<String, dynamic>))
               .toList()
           : [],
-      fechaApertura: json['fechaApertura'] != null
-          ? DateTime.tryParse(json['fechaApertura'] as String)
-          : null,
-      fechaCierre: json['fechaCierre'] != null
-          ? DateTime.tryParse(json['fechaCierre'] as String)
-          : null,
-      fechaCreacion: json['fechaCreacion'] != null
-          ? DateTime.tryParse(json['fechaCreacion'] as String)
-          : null,
+      fechaApertura: _parseDate(json['inicio']) ?? _parseDate(json['fechaApertura']),
+      fechaCierre: _parseDate(json['fin']) ?? _parseDate(json['fechaCierre']),
+      fechaCreacion: _parseDate(json['fechaCreacion']),
       totalRecaudado:
           (json['totalRecaudado'] as num?)?.toDouble() ?? 0.0,
       resumen: json['resumen'] as String? ?? '',
+      pick3: json['pick3'] as String? ?? '',
+      pick4: json['pick4'] as String? ?? '',
+      premiosProcesados: json['premiosProcesados'] as int? ?? 0,
+      listerosCount: json['listerosCount'] as int? ?? 0,
+      totalPremios: (json['totalPremios'] as num?)?.toDouble() ?? 0.0,
     );
+  }
+
+  static DateTime? _parseDate(dynamic value) {
+    if (value == null) return null;
+    if (value is String) return DateTime.tryParse(value);
+    return null;
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'lottery': lottery,
+      'loteria': lottery,
       'turno': turno,
       'estado': estado,
       'picks': picks.map((p) => p.toJson()).toList(),
       'premios': premios.map((p) => p.toJson()).toList(),
       'totalRecaudado': totalRecaudado,
       'resumen': resumen,
+      'pick3': pick3,
+      'pick4': pick4,
+      'premiosProcesados': premiosProcesados,
+      'listerosCount': listerosCount,
+      'totalPremios': totalPremios,
     };
   }
 

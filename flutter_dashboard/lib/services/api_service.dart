@@ -150,9 +150,8 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> updateGroupConfig(
-      String id, Map<String, dynamic> config) async {
-    final response =
-        await put(ApiConfig.groupConfig(id), body: {'config': config});
+      String id, Map<String, dynamic> body) async {
+    final response = await put(ApiConfig.groupConfig(id), body: body);
     return response as Map<String, dynamic>;
   }
 
@@ -171,7 +170,12 @@ class ApiService {
       String groupId, String phone, String name, double porciento) async {
     final response = await post(
       ApiConfig.groupListeros(groupId),
-      body: {'phone': phone, 'name': name, 'porciento': porciento},
+      body: {
+        'phone': phone,
+        'nombre': name,
+        'porciento': porciento,
+        'horarioPermitido': '00:00-23:59',
+      },
     );
     return response as Map<String, dynamic>;
   }

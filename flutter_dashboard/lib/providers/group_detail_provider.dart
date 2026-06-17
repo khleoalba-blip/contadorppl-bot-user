@@ -68,11 +68,29 @@ class GroupDetailProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> updateGroupConfig(String groupId, GroupConfig config) async {
+  Future<bool> updateGroupConfig(String groupId, Map<String, dynamic> body) async {
     try {
-      await _apiService.updateGroupConfig(groupId, config.toJson());
+      await _apiService.updateGroupConfig(groupId, body);
+      // Update local state from the saved body
       if (_group != null) {
-        _group = _group!.copyWith(config: config);
+        final updatedConfig = GroupConfig(
+          premiosMap: (body['configPremios'] as Map<String, dynamic>?)
+                  ?.map((k, v) => MapEntry(k, (v as num).toInt())) ??
+              _group!.config.premiosMap,
+          barraInterpretacion:
+              body['barraInterpretacion'] as String? ?? _group!.config.barraInterpretacion,
+          bancoGroupJid:
+              body['bancoGroupJid'] as String? ?? _group!.config.bancoGroupJid,
+          notificarResultados:
+              body['jornadaAutomatica'] as bool? ?? _group!.config.notificarResultados,
+        );
+        _group = _group!.copyWith(
+          lotteryType: body['loteriaActual'] as String? ?? _group!.lotteryType,
+          mode: body['modo'] as String? ?? _group!.mode,
+          jornadaAutomatica:
+              body['jornadaAutomatica'] as bool? ?? _group!.jornadaAutomatica,
+          config: updatedConfig,
+        );
         notifyListeners();
       }
       return true;

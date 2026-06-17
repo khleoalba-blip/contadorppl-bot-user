@@ -20,7 +20,7 @@ class ListeroModel {
   factory ListeroModel.fromJson(Map<String, dynamic> json) {
     return ListeroModel(
       phone: json['phone'] as String? ?? '',
-      name: json['name'] as String? ?? '',
+      name: json['nombre'] as String? ?? json['name'] as String? ?? '',
       porciento: (json['porciento'] as num?)?.toDouble() ?? 0.0,
       deuda: (json['deuda'] as num?)?.toDouble() ?? 0.0,
       activo: json['activo'] as bool? ?? true,

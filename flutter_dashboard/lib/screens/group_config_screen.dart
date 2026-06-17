@@ -223,7 +223,7 @@ class _GroupConfigScreenState extends State<GroupConfigScreen> {
   }
 
   Widget _buildLotterySelector(ThemeData theme) {
-    final loterias = ['Florida', 'Charada', 'Dominical', 'Quiniela'];
+    final loterias = ['Florida', 'Georgia', 'New York'];
     return Wrap(
       spacing: 8,
       runSpacing: 8,
@@ -361,22 +361,18 @@ class _GroupConfigScreenState extends State<GroupConfigScreen> {
       premiosMap[entry.key] = value;
     }
 
-    final config = GroupConfig(
-      premiosMap: premiosMap,
-      notificarResultados: _jornadaAutomatica,
-    );
-
-    // Primero actualizar la config de premios
+    // Build body matching API expected fields (top-level)
     final body = {
       'loteriaActual': _loteriaActual,
       'modo': _modo,
       'jornadaAutomatica': _jornadaAutomatica,
       'configPremios': premiosMap,
+      'barraInterpretacion': 'error',
+      'bancoGroupJid': '',
     };
 
     try {
-      final success =
-          await provider.updateGroupConfig(_groupId, config);
+      final success = await provider.updateGroupConfig(_groupId, body);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
