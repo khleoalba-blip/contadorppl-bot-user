@@ -38,55 +38,54 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Extract version from pubspec.yaml
+      - name: Extract version
         id: version
         run: |
           VERSION=$(grep 'version:' pubspec.yaml | head -1 | awk '{print $2}' | cut -d'+' -f1)
           echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "Version: $VERSION"
+          echo "Version: v$VERSION"
 
-      - name: Build APK (armeabi-v7a)
-        run: flutter build apk --release --target-platform android-arm
+      - name: Build APK per ABI
+        run: |
+          flutter build apk --release --target-platform android-arm
+          flutter build apk --release --target-platform android-arm64
+          flutter build apk --release --target-platform android-x64
 
-      - name: Build APK (arm64-v8a)
-        run: flutter build apk --release --target-platform android-arm64
-
-      - name: Build APK (x86_64)
-        run: flutter build apk --release --target-platform android-x64
-
-      - name: Package APKs for release
+      - name: Package APKs
         run: |
           mkdir -p release_apks
-          # Buscar todos los APKs generados
-          echo "=== APKs generados ==="
-          find build/app/outputs/flutter-apk/ -name "*.apk" -ls
-          # Copiar con nombres descriptivos
-          ls build/app/outputs/flutter-apk/
-          for apk in build/app/outputs/flutter-apk/*.apk; do
-            base=$(basename "$apk")
-            cp "$apk" "release_apks/ContadorPPL-v$VERSION-$base"
+          APK_DIR="build/app/outputs/flutter-apk"
+          echo "=== Archivos en $APK_DIR ==="
+          ls -la "$APK_DIR/"
+          echo ""
+          cd "$APK_DIR"
+          for f in *.apk; do
+            echo "Copiando: $f"
+            cp "$f" "$GITHUB_WORKSPACE/flutter_dashboard/release_apks/ContadorPPL-v$VERSION-$f"
           done
+          cd "$GITHUB_WORKSPACE/flutter_dashboard"
+          echo ""
           echo "=== APKs empaquetados ==="
           ls -la release_apks/
+          echo ""
+          echo "Total APKs: $(ls release_apks/ | wc -l)"
 
       - name: Create/Update Release
         uses: ncipollo/release-action@v1
         with:
           artifacts: "flutter_dashboard/release_apks/*.apk"
           tag: v${{ env.VERSION }}
-          name: "ContadorPPL v${{ env.VERSION }}"
+          name: "ContadorPPL Dashboard v${{ env.VERSION }}"
           body: |
             ## 📱 ContadorPPL Dashboard v${{ env.VERSION }}
 
-            🚀 Build automático desde la rama `${{ github.ref_name }}`
+            🚀 Build automático desde `${{ github.ref_name }}`
 
-            ### 📦 Descargas:
-            - **arm64-v8a** → Telefonos modernos
-            - **armeabi-v7a** → Dispositivos 32-bit
-            - **x86_64** → Emuladores
-
-            ### 📝 Cambios:
-            - Consulta el historial de commits
+            | Arquitectura | Para |
+            |---|---|
+            | **arm64-v8a** | Teléfonos modernos (la mayoría) |
+            | **armeabi-v7a** | Dispositivos 32-bit |
+            | **x86_64** | Emuladores Android |
           token: ${{ secrets.TOKEN }}
           allowUpdates: true
           removeArtifacts: true
