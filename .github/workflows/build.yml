@@ -35,13 +35,6 @@ jobs:
           channel: stable
           flutter-version: '3.24.x'
 
-      - name: Cache Flutter dependencies
-        uses: actions/cache@v4
-        with:
-          path: /opt/hostedtoolcache/flutter
-          key: flutter-${{ runner.os }}-${{ hashFiles('flutter_dashboard/pubspec.yaml') }}
-          restore-keys: flutter-${{ runner.os }}-
-
       - name: Install dependencies
         run: flutter pub get
 
@@ -61,12 +54,19 @@ jobs:
       - name: Build APK (x86_64)
         run: flutter build apk --release --target-platform android-x64
 
-      - name: Rename APKs for release
+      - name: Package APKs for release
         run: |
           mkdir -p release_apks
-          cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk release_apks/ContadorPPL-v${{ env.VERSION }}-armeabi-v7a.apk
-          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk release_apks/ContadorPPL-v${{ env.VERSION }}-arm64-v8a.apk
-          cp build/app/outputs/flutter-apk/app-x86_64-release.apk release_apks/ContadorPPL-v${{ env.VERSION }}-x86_64.apk
+          # Buscar todos los APKs generados
+          echo "=== APKs generados ==="
+          find build/app/outputs/flutter-apk/ -name "*.apk" -ls
+          # Copiar con nombres descriptivos
+          ls build/app/outputs/flutter-apk/
+          for apk in build/app/outputs/flutter-apk/*.apk; do
+            base=$(basename "$apk")
+            cp "$apk" "release_apks/ContadorPPL-v$VERSION-$base"
+          done
+          echo "=== APKs empaquetados ==="
           ls -la release_apks/
 
       - name: Create/Update Release
@@ -80,10 +80,10 @@ jobs:
 
             🚀 Build automático desde la rama `${{ github.ref_name }}`
 
-            ### 📦 Descargas (elige segun tu dispositivo):
-            - **arm64-v8a** → Para la mayoria de telefonos modernos
-            - **armeabi-v7a** → Para dispositivos mas antiguos (32-bit)
-            - **x86_64** → Para emuladores
+            ### 📦 Descargas:
+            - **arm64-v8a** → Telefonos modernos
+            - **armeabi-v7a** → Dispositivos 32-bit
+            - **x86_64** → Emuladores
 
             ### 📝 Cambios:
             - Consulta el historial de commits
