@@ -589,40 +589,67 @@ function registrarRutas(app, conn) {
                 return res.status(403).json({ error: 'No tienes acceso a este grupo' });
             }
             
-            const jornadasDir = path.join(__dirname, '..', 'data', 'groups', groupId);
-            if (!fs.existsSync(jornadasDir)) {
-                return res.json([]);
-            }
-            
             const jornadas = [];
-            const files = fs.readdirSync(jornadasDir).filter(f => f.endsWith('.json') && f !== 'config.json' && f !== 'listeros.json' && f !== 'horarios.json' && f !== 'metadata.json');
             
-            for (const file of files) {
-                try {
-                    const data = JSON.parse(fs.readFileSync(path.join(jornadasDir, file), 'utf-8'));
-                    jornadas.push({
-                        id: data.id || file.replace('.json', ''),
-                        loteria: data.loteria || 'Florida',
-                        turno: data.turno || 'desconocido',
-                        estado: data.estado || 'desconocido',
-                        inicio: data.inicio || null,
-                        fin: data.fin || null,
-                        pick3: data.pick3 || null,
-                        pick4: data.pick4 || null,
-                        premiosProcesados: data.premiosProcesados || false,
-                        listerosCount: data.listeros ? Object.keys(data.listeros).length : 0,
-                        totalPremios: data.premios ? Object.values(data.premios).reduce((acc, tipos) => {
-                            return acc + Object.values(tipos).reduce((a, b) => a + b, 0);
-                        }, 0) : 0
-                    });
-                } catch (e) {
-                    console.error(`[API] Error leyendo jornada ${file}:`, e.message);
+            // 1. Intentar MongoDB (todas las jornadas del grupo desde caché)
+            try {
+                const mongoJornadas = db.obtenerTodasJornadasGrupo(groupId);
+                if (mongoJornadas && mongoJornadas.length > 0) {
+                    for (const data of mongoJornadas) {
+                        jornadas.push({
+                                id: data.id || '',
+                                loteria: data.loteria || 'Florida',
+                                turno: data.turno || 'desconocido',
+                                estado: data.estado || 'desconocido',
+                                inicio: data.inicioReal || data.inicio || null,
+                                fin: data.finReal || data.fin || null,
+                                pick3: data.pick3 || null,
+                                pick4: data.pick4 || null,
+                                premiosProcesados: data.premiosProcesados || false,
+                                listerosCount: data.listeros ? Object.keys(data.listeros).length : 0,
+                                totalPremios: data.premios ? Object.values(data.premios).reduce((acc, tipos) => {
+                                    return acc + Object.values(tipos).reduce((a, b) => a + b, 0);
+                                }, 0) : 0
+                            });
+                        }
+                    }
+                }
+            } catch(e) { console.error('[API] Error Mongo jornadas:', e.message); }
+            
+            // 2. Fallback: leer del subdirectorio jornadas/
+            if (jornadas.length === 0) {
+                const jornadasDir = path.join(__dirname, '..', 'data', 'groups', groupId, 'jornadas');
+                if (fs.existsSync(jornadasDir)) {
+                    const files = fs.readdirSync(jornadasDir).filter(f => f.endsWith('.json'));
+                    for (const file of files) {
+                        try {
+                            const data = JSON.parse(fs.readFileSync(path.join(jornadasDir, file), 'utf-8'));
+                            jornadas.push({
+                                id: data.id || file.replace('.json', ''),
+                                loteria: data.loteria || 'Florida',
+                                turno: data.turno || 'desconocido',
+                                estado: data.estado || 'desconocido',
+                                inicio: data.inicioReal || data.inicio || null,
+                                fin: data.finReal || data.fin || null,
+                                pick3: data.pick3 || null,
+                                pick4: data.pick4 || null,
+                                premiosProcesados: data.premiosProcesados || false,
+                                listerosCount: data.listeros ? Object.keys(data.listeros).length : 0,
+                                totalPremios: data.premios ? Object.values(data.premios).reduce((acc, tipos) => {
+                                    return acc + Object.values(tipos).reduce((a, b) => a + b, 0);
+                                }, 0) : 0
+                            });
+                        } catch (e) {
+                            console.error(`[API] Error leyendo jornada ${file}:`, e.message);
+                        }
+                    }
                 }
             }
             
             // Ordenar por inicio descendente
             jornadas.sort((a, b) => (b.inicio || '').localeCompare(a.inicio || ''));
             
+            console.log(`[API] 📋 Jornadas para ${groupId}: ${jornadas.length} encontradas`);
             res.json(jornadas);
         } catch (e) {
             console.error(`[API] Error en GET /groups/${req.params.id}/jornadas:`, e.message);

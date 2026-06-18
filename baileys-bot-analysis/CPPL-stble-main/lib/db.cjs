@@ -198,6 +198,17 @@ function guardarJornadaDoc(groupId, jornadaId, datos) {
         ).catch(() => {});
     }
 }
+function obtenerTodasJornadasGrupo(groupId) {
+    const jornadas = [];
+    const prefix = groupId + '|';
+    for (const [key, data] of Object.entries(cache.jornadas || {})) {
+        if (key.startsWith(prefix)) {
+            jornadas.push(data);
+        }
+    }
+    return jornadas;
+}
+
 // ============================================
 // LIMPIEZA AUTOMÁTICA DE JORNADAS VIEJAS
 // Se ejecuta al iniciar, borra jornadas cerradas de más de 2 días
@@ -235,5 +246,7 @@ module.exports = {
     obtenerGroupData,
     guardarGroupData,
     obtenerJornada,
-    guardarJornadaDoc
+    guardarJornadaDoc,
+    obtenerTodasJornadasGrupo,
+    cache  // Exponer caché para la API dashboard
 };
